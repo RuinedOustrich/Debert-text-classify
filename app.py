@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import BertTokenizer, BertModel
+from transformers import AutoTokenizer, AutoModel
 import re
 
 MAX_LEN = 256
@@ -18,13 +18,13 @@ def is_ok(text):
     if not text:
         match = True
     else:
-        match = re.match("""^[a-zA-Z][a-z0-9 !?:;"'.,]+$""", text)
+        match = re.match("[a-z]+", text)
                          
     return bool(match)
 
-@st.experimental_memo
+@st.cache_data
 def define_tokenizer():
-    tokenizer = BertTokenizer.from_pretrained('./tokenizer')
+    tokenizer = AutoTokenizer.from_pretrained('./token')
     return tokenizer
 
 def preprocess(text):
@@ -47,27 +47,41 @@ def preprocess(text):
     
     return input_ids, attention_mask, token_type_ids
 
+class MeanPooling(nn.Module):
+    def __init__(self):
+        super(MeanPooling, self).__init__()
+        
+    def forward(self, last_hidden_state, attention_mask):
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(last_hidden_state.size()).float()
+        sum_embeddings = torch.sum(last_hidden_state * input_mask_expanded, 1)
+        sum_mask = input_mask_expanded.sum(1)
+        sum_mask = torch.clamp(sum_mask, min=1e-9)
+        mean_embeddings = sum_embeddings / sum_mask
+        return mean_embeddings
+
 class BERTClass(torch.nn.Module):
     def __init__(self):
         super(BERTClass, self).__init__()
-        self.bert_model = BertModel.from_pretrained('./BERT')
+        self.bert_model = AutoModel.from_pretrained("./bert", return_dict=True)
         self.dropout = torch.nn.Dropout(0.3)
-        self.linear = torch.nn.Linear(768, 12)
+        self.batchnorm = nn.BatchNorm1d(768)
+        self.pooler = MeanPooling()
+        self.linear = torch.nn.Linear(768, 20)
 
-    def forward(self, input_ids, attn_mask, token_type_ids):
+    def forward(self, input_ids, attn_mask):
         output = self.bert_model(
             input_ids, 
-            attention_mask=attn_mask, 
-            token_type_ids=token_type_ids
+            attention_mask=attn_mask,
         )
-        output_dropout = self.dropout(output.pooler_output)
+        output = self.pooler(output.last_hidden_state, attn_mask)
+        output_dropout = self.dropout(output)
         output = self.linear(output_dropout)
         return output
 
-@st.experimental_memo
+@st.cache_data
 def configure_model():
     model = BERTClass()
-    model.load_state_dict(torch.load('model_state_dict.pt'))
+    model.load_state_dict(torch.load('ckpt_epoch8.pt', map_location = 'cpu'))
     return model
 
 def predict(text):
@@ -75,12 +89,13 @@ def predict(text):
     model = configure_model()
     model.eval()
 
-    target_idxs = ['Astrophysics', 'Condensed matter', 
-                   'Computer Science', 'Electrical Engineering and Systems Science', 
-                   'General Relativity and Quantum Cosmology', 'High Energy Physics - Phenomenology', 
-                   'High Energy Physics - Theory', 'Mathematics', 
-                   'Mathematical Physics', 'Physics',
-                   'Quantum Physics', 'Statistics']
+    target_idxs =  ['Astrophysics', 'Condensed Matter', 'Computer Science',
+                    'Economics', 'Electrical Engineering and Systems Science',
+                    'General Relativity and Quantum Cosmology', 'High Energy Physics - Experiment', 
+                    'High Energy Physics - Lattice', 'High Energy Physics - Phenomenology', 
+                    'High Energy Physics - Theory', 'Mathematics', 'Mathematical Physics', 
+                    'Nonlinear Sciences', 'Nuclear Experiment', 'Nuclear Theory',
+                    'Physics', 'Quantitative Biology', 'Quantitative Finance', 'Quantum Physics', 'Statistics']
     
     with torch.no_grad():
     
@@ -102,23 +117,26 @@ if __name__ == '__main__':
     title = form.text_input("TITLE")
     summary = form.text_area("SUMMARY")
     button = form.form_submit_button("Submit")
+    summary = summary.lower()
+    title = title.lower()
     if button:
         if not title and not summary:
             st.write("**PLEASE ENTER SOMETHING!**")
         else:
             text = title + ". " + summary
         
-      #      if not is_ok(summary) and is_ok(title):
-       #         st.write("**INCORRECT INPUT FORMAT: SUMMARY**")
-     #            st.write("**INCORRECT INPUT FORMAT: TITLE**")
-   #         elif not is_ok(title) and not is_ok(summary):
-  #              st.write("**INCORRECT INPUT FORMAT: TITLE, SUMMARY**")
- #           elif len(summary.split()) == 1 and not title:
-#                st.write("**There's only one word in summary, result can be bad. Make shure you enter full text**")
-           # elif len(title.split()) == 1 and not summary:
-         #       st.write("**There's only one word in title, result can be bad. Make shure you enter full text**")
-            if len(title.split()) == 1 and len(summary.split()) == 1:
-                st.write("**There's only one word in title and summary, result can be bad. Make shure you enter full text**")
+            if not is_ok(summary) and is_ok(title):
+                st.write("**INCORRECT INPUT FORMAT: SUMMARY**")
+            if is_ok(summary) and not is_ok(title):
+                st.write("**INCORRECT INPUT FORMAT: TITLE**")
+            elif not is_ok(title) and not is_ok(summary):
+                st.write("**INCORRECT INPUT FORMAT: TITLE, SUMMARY**")
+            elif len(summary.split()) in (1,2,3) and not title:
+                st.write("**There are too few words in summary, result can be bad. Make shure you enter full text**")
+            elif len(title.split()) in (1,2,3) and not summary:
+                st.write("**There are too few words in title, result can be bad. Make shure you enter full text**")
+            elif len(title.split()) in (1,2,3) and len(summary.split()) == 1:
+                st.write("**There are too few words in title and summary, result can be bad. Make shure you enter full text**")
             else:
                 outputs = predict(text)
                 sums_probs = []
