@@ -60,10 +60,14 @@ class MeanPooling(nn.Module):
         return mean_embeddings
 
 @st.cache_data
+def define_bert():
+    bert_model = AutoModel.from_pretrained("./bert", return_dict=True)
+    return bert_model
+    
 class BERTClass(torch.nn.Module):
     def __init__(self):
         super(BERTClass, self).__init__()
-        self.bert_model = AutoModel.from_pretrained("./bert", return_dict=True)
+        self.bert_model = define_bert()
         self.dropout = torch.nn.Dropout(0.3)
         self.batchnorm = nn.BatchNorm1d(768)
         self.pooler = MeanPooling()
