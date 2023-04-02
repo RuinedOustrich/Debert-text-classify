@@ -60,14 +60,10 @@ class MeanPooling(nn.Module):
         return mean_embeddings
 
 @st.cache_data
-def define_bert():
-    bert_model = AutoModel.from_pretrained("./bert", return_dict=True)
-    return bert_model
-    
 class BERTClass(torch.nn.Module):
     def __init__(self):
         super(BERTClass, self).__init__()
-        self.bert_model = define_bert()
+        self.bert_model = AutoModel.from_pretrained("./bert", return_dict=True)
         self.dropout = torch.nn.Dropout(0.3)
         self.batchnorm = nn.BatchNorm1d(768)
         self.pooler = MeanPooling()
@@ -89,9 +85,8 @@ def configure_model():
     model.load_state_dict(torch.load('ckpt_epoch8.pt', map_location = 'cpu'))
     return model
 
-def predict(text):
+def predict(text, model):
     
-    model = configure_model()
     model.eval()
 
     target_idxs =  ['Astrophysics', 'Condensed Matter', 'Computer Science',
@@ -143,7 +138,8 @@ if __name__ == '__main__':
             elif len(title.split()) in (1,2,3) and len(summary.split()) == 1:
                 st.write("**There are too few words in title and summary, result can be bad. Make shure you enter full text**")
             else:
-                outputs = predict(text)
+                model = configure_model()
+                outputs = predict(text, model)
                 sums_probs = []
                 for k, v in outputs.items(): 
                     st.write(f'Topic:  **:blue[{k}]**, probability: **:green[{v}%]**')
