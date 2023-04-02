@@ -143,8 +143,8 @@ if __name__ == '__main__':
                 sorted, indices = predict(text)
                 sums_probs = []
                 for k, v in zip(sorted, indices): 
-                    st.write(f'Topic:  **:blue[{target_idxs[k]}]**, probability: **:green[{round(float(sorted)}%]**')
-                    sums_probs.append(float(sorted))
+                    st.write(f'Topic:  **:blue[{target_idxs[v]}]**, probability: **:green[{round(float(k), 2)}%]**')
+                    sums_probs.append(round(float(k), 2))
                     if sum(sums_probs) >= 95:
                         break
                 
