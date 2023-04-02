@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoTokenizer, DebertaV2Model
+from transformers import DebertaV2Tokenizer, DebertaV2Model
 import re
 
 MAX_LEN = 256
@@ -32,7 +32,7 @@ def is_ok(text):
 
 @st.cache_data
 def define_tokenizer():
-    tokenizer = AutoTokenizer.from_pretrained('./token')
+    tokenizer = DebertaV2Tokenizer.from_pretrained('./token')
     return tokenizer
 
 def preprocess(text):
