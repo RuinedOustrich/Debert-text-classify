@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoTokenizer, AutoModel, DebertaV2Config
+from transformers import AutoTokenizer, DebertaV2Model
 import re
 
 MAX_LEN = 256
@@ -70,8 +70,7 @@ class MeanPooling(nn.Module):
 class BERTClass(torch.nn.Module):
     def __init__(self):
         super(BERTClass, self).__init__()
-        config = DebertaV2Config()
-        self.bert_model = AutoModel.from_config(config)
+        self.bert_model = DebertaV2Model.from_pretrained("./bert")
         self.dropout = torch.nn.Dropout(0.3)
         self.batchnorm = nn.BatchNorm1d(768)
         self.pooler = MeanPooling()
