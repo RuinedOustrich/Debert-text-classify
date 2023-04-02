@@ -14,13 +14,13 @@ import re
 
 MAX_LEN = 256
 
-target_idxs =  {0: 'Astrophysics', 1: 'Condensed Matter', 2: 'Computer Science',
-                    3: 'Economics', 4: 'Electrical Engineering and Systems Science',
-                    5: 'General Relativity and Quantum Cosmology', 6: 'High Energy Physics - Experiment', 
-                    7: 'High Energy Physics - Lattice', 8: 'High Energy Physics - Phenomenology', 
-                    9: 'High Energy Physics - Theory', 10: 'Mathematics', 11: 'Mathematical Physics', 
-                    12: 'Nonlinear Sciences', 13: 'Nuclear Experiment', 14: 'Nuclear Theory',
-                    15: 'Physics', 16: 'Quantitative Biology', 17: 'Quantitative Finance', 18: 'Quantum Physics', 19: 'Statistics'}
+target_idxs =  ['Astrophysics', 'Condensed Matter', 'Computer Science',
+                    'Economics', 'Electrical Engineering and Systems Science',
+                    'General Relativity and Quantum Cosmology', 'High Energy Physics - Experiment', 
+                    'High Energy Physics - Lattice', 'High Energy Physics - Phenomenology', 
+                    'High Energy Physics - Theory', 'Mathematics', 'Mathematical Physics', 
+                    'Nonlinear Sciences', 'Nuclear Experiment', 'Nuclear Theory',
+                    'Physics', 'Quantitative Biology', 'Quantitative Finance', 'Quantum Physics', 'Statistics']
 
 def is_ok(text):
     if not text:
@@ -104,11 +104,9 @@ def predict(text):
         preds = model(input_ids, attention_mask)
         output = F.softmax(preds, dim = 1).detach()
         output = output.flatten().numpy()
-        sorted, indices = torch.sort(output)
-        #output = {tag: round(float(prob)*100, 2) for tag, prob in zip(target_idxs, output)}
-        #outputs = {k: v for k, v in sorted(output.items(), reverse = True, key = lambda x: x[1])}
-        sorted = sorted * 100
-    return sorted, indices
+        output = {tag: round(float(prob)*100, 2) for tag, prob in zip(target_idxs, output)}
+        outputs = {k: v for k, v in sorted(output.items(), reverse = True, key = lambda x: x[1])}
+    return outputs
 
 
 if __name__ == '__main__':
@@ -140,11 +138,11 @@ if __name__ == '__main__':
             elif len(title.split()) in (1,2,3) and len(summary.split()) == 1:
                 st.write("**There are too few words in title and summary, result can be bad. Make shure you enter full text**")
             else:
-                sorted, indices = predict(text)
+                outputs = predict(text)
                 sums_probs = []
-                for k, v in zip(sorted, indices): 
-                    st.write(f'Topic:  **:blue[{target_idxs[v]}]**, probability: **:green[{round(float(k), 2)}%]**')
-                    sums_probs.append(round(float(k), 2))
+                for k, v in outputs.items(): 
+                    st.write(f'Topic:  **:blue[{k}]**, probability: **:green[{v}%]**')
+                    sums_probs.append(v)
                     if sum(sums_probs) >= 95:
                         break
                 
