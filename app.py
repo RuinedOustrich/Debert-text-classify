@@ -59,6 +59,7 @@ class MeanPooling(nn.Module):
         mean_embeddings = sum_embeddings / sum_mask
         return mean_embeddings
 
+@st.cache_data
 class BERTClass(torch.nn.Module):
     def __init__(self):
         super(BERTClass, self).__init__()
