@@ -71,7 +71,7 @@ class BERTClass(torch.nn.Module):
     def __init__(self):
         super(BERTClass, self).__init__()
         config = DebertaV2Config()
-        self.bert_model = AutoModel(config)
+        self.bert_model = AutoModel.from_config(config)
         self.dropout = torch.nn.Dropout(0.3)
         self.batchnorm = nn.BatchNorm1d(768)
         self.pooler = MeanPooling()
