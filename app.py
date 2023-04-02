@@ -18,13 +18,13 @@ def is_ok(text):
     if not text:
         match = True
     else:
-        match = re.match("[a-z]+", text)
+        match = re.match("""^[a-zA-Z][a-z0-9 !?:;"'.,]+$""", text)
                          
     return bool(match)
 
-@st.cache_data
+@st.experimental_memo
 def define_tokenizer():
-    tokenizer = BertTokenizer.from_pretrained('./token')
+    tokenizer = BertTokenizer.from_pretrained('./tokenizer')
     return tokenizer
 
 def preprocess(text):
@@ -50,7 +50,7 @@ def preprocess(text):
 class BERTClass(torch.nn.Module):
     def __init__(self):
         super(BERTClass, self).__init__()
-        self.bert_model = BertModel.from_pretrained('./bert')
+        self.bert_model = BertModel.from_pretrained('./BERT')
         self.dropout = torch.nn.Dropout(0.3)
         self.linear = torch.nn.Linear(768, 12)
 
@@ -64,10 +64,10 @@ class BERTClass(torch.nn.Module):
         output = self.linear(output_dropout)
         return output
 
-@st.cache_data
+@st.experimental_memo
 def configure_model():
     model = BERTClass()
-    model.load_state_dict(torch.load('model_state_dict.pt', map_location = 'cpu'))
+    model.load_state_dict(torch.load('model_state_dict.pt'))
     return model
 
 def predict(text):
@@ -102,26 +102,23 @@ if __name__ == '__main__':
     title = form.text_input("TITLE")
     summary = form.text_area("SUMMARY")
     button = form.form_submit_button("Submit")
-    summary = summary.lower()
-    title = title.lower()
     if button:
         if not title and not summary:
             st.write("**PLEASE ENTER SOMETHING!**")
         else:
             text = title + ". " + summary
         
-            if not is_ok(summary) and is_ok(title):
-                st.write("**INCORRECT INPUT FORMAT: SUMMARY**")
-            if is_ok(summary) and not is_ok(title):
-                st.write("**INCORRECT INPUT FORMAT: TITLE**")
-            elif not is_ok(title) and not is_ok(summary):
-                st.write("**INCORRECT INPUT FORMAT: TITLE, SUMMARY**")
-            elif len(summary.split()) in (1,2,3) and not title:
-                st.write("**There are too few words in summary, result can be bad. Make shure you enter full text**")
-            elif len(title.split()) in (1,2,3) and not summary:
-                st.write("**There are too few words in title, result can be bad. Make shure you enter full text**")
-            elif len(title.split()) in (1,2,3) and len(summary.split()) == 1:
-                st.write("**There are too few words in title and summary, result can be bad. Make shure you enter full text**")
+      #      if not is_ok(summary) and is_ok(title):
+       #         st.write("**INCORRECT INPUT FORMAT: SUMMARY**")
+     #            st.write("**INCORRECT INPUT FORMAT: TITLE**")
+   #         elif not is_ok(title) and not is_ok(summary):
+  #              st.write("**INCORRECT INPUT FORMAT: TITLE, SUMMARY**")
+ #           elif len(summary.split()) == 1 and not title:
+#                st.write("**There's only one word in summary, result can be bad. Make shure you enter full text**")
+           # elif len(title.split()) == 1 and not summary:
+         #       st.write("**There's only one word in title, result can be bad. Make shure you enter full text**")
+            if len(title.split()) == 1 and len(summary.split()) == 1:
+                st.write("**There's only one word in title and summary, result can be bad. Make shure you enter full text**")
             else:
                 outputs = predict(text)
                 sums_probs = []
