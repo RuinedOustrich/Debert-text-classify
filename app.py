@@ -35,7 +35,7 @@ def preprocess(text):
         text,
         max_length=MAX_LEN,
         add_special_tokens=True,
-        return_token_type_ids=True,
+        return_token_type_ids=False,
         pad_to_max_length=True,
         return_attention_mask=True,
         return_tensors='pt',
@@ -43,9 +43,8 @@ def preprocess(text):
 
     input_ids = encoded_text['input_ids']
     attention_mask = encoded_text['attention_mask']
-    token_type_ids = encoded_text['token_type_ids']     
     
-    return input_ids, attention_mask, token_type_ids
+    return input_ids, attention_mask
 
 class MeanPooling(nn.Module):
     def __init__(self):
@@ -99,8 +98,8 @@ def predict(text):
     
     with torch.no_grad():
     
-        input_ids, attention_mask, token_type_ids = preprocess(text)
-        preds = model(input_ids, attention_mask, token_type_ids)
+        input_ids, attention_mask = preprocess(text)
+        preds = model(input_ids, attention_mask)
         output = F.softmax(preds, dim = 1).detach()
         output = output.flatten().numpy()
         output = {tag: round(float(prob)*100, 2) for tag, prob in zip(target_idxs, output)}
