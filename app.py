@@ -26,7 +26,7 @@ def is_ok(text):
     if not text:
         match = True
     else:
-        match = re.match("[a-z]+", text)
+        match = re.match("\w*[a-z]+", text)
                          
     return bool(match)
 
@@ -113,6 +113,7 @@ if __name__ == '__main__':
     
     st.markdown("<h1 style='text-align: center;'>Find out the topic of the article</h1>", unsafe_allow_html=True)
     st.markdown("<h2 style='text-align: center;'>Please enter title or summary</h2>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>Enter both for better result</h3>", unsafe_allow_html=True)
     form = st.form("my_form")
     title = form.text_input("TITLE")
     summary = form.text_area("SUMMARY")
@@ -124,7 +125,6 @@ if __name__ == '__main__':
             st.write("**PLEASE ENTER SOMETHING!**")
         else:
             text = title + ". " + summary
-        
             if not is_ok(summary) and is_ok(title):
                 st.write("**INCORRECT INPUT FORMAT: SUMMARY**")
             if is_ok(summary) and not is_ok(title):
