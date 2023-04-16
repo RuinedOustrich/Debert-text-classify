@@ -26,7 +26,7 @@ def is_ok(text):
     if not text:
         match = True
     else:
-        match = re.match("\d* [a-z]+", text)
+        match = re.match("[a-z]+\d*", text)
                          
     return bool(match)
 
