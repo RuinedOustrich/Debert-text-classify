@@ -1,4 +1,4 @@
-App for papers classification. 
+App for papers classification, which takes the title of the article and its abstract, and outputs the most likely topic of the article
 
 *How to Use*\
 in shell:\
