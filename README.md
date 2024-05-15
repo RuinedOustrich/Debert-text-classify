@@ -1,9 +1,9 @@
 *How to Use*\
 in shell:\
-«`bash: git clone https://github.com/RuinedOustrich/Debert-text-classify.git«`\
-«`bash: cd Debert-text-classify«`\
-«`bash: chmod +x run_app.sh«`\
-«`bash: ./run_app.sh«`
+`bash: git clone https://github.com/RuinedOustrich/Debert-text-classify.git`\
+`bash: cd Debert-text-classify`\
+`bash: chmod +x run_app.sh`\
+`bash: ./run_app.sh`
 
 You can try it:\
 
