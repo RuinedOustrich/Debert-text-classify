@@ -9,7 +9,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoTokenizer, DebertaV2Model
+from transformers import AutoTokenizer, AutoModel, AutoConfig
+from huggingface_hub import PyTorchModelHubMixin
 import re
 
 MAX_LEN = 256
@@ -67,14 +68,15 @@ class MeanPooling(nn.Module):
         mean_embeddings = sum_embeddings / sum_mask
         return mean_embeddings
 
-class BERTClass(torch.nn.Module):
-    def __init__(self):
+class BERTClass(torch.nn.Module, PyTorchModelHubMixin):
+    def __init__(self, num_classes = 20):
         super(BERTClass, self).__init__()
-        self.bert_model = DebertaV2Model.from_pretrained("./bert")
+        config = AutoConfig.from_pretrained("./bert/config.json")
+        self.bert_model = AutoModel.from_config(config)
         self.dropout = torch.nn.Dropout(0.3)
         self.batchnorm = nn.BatchNorm1d(768)
         self.pooler = MeanPooling()
-        self.linear = torch.nn.Linear(768, 20)
+        self.linear = torch.nn.Linear(768, num_classes)
 
     def forward(self, input_ids, attn_mask):
         output = self.bert_model(
@@ -88,8 +90,7 @@ class BERTClass(torch.nn.Module):
 
 @st.cache_data
 def configure_model():
-    model = BERTClass()
-    model.load_state_dict(torch.load('ckpt_epoch8.pt', map_location = 'cpu'))
+    model = BERTClass.from_pretrained("./deberta-arxiv-model")
     return model
 
 def predict(text):
