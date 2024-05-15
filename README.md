@@ -1,3 +1,5 @@
+App for papers classification. 
+
 *How to Use*\
 in shell:\
 `bash: git clone https://github.com/RuinedOustrich/Debert-text-classify.git`\
